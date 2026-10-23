@@ -640,6 +640,11 @@ td small {
   line-height: 1.5;
 }
 
+.field-error {
+  color: var(--red);
+  font-size: 10px;
+}
+
 .empty-card {
   display: grid;
   justify-items: center;

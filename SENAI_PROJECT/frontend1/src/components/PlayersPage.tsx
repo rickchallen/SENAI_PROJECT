@@ -57,6 +57,23 @@ function receiptText(value: unknown, fallback: string) {
   return typeof value === 'string' ? value : fallback
 }
 
+function playerNameValidationMessage(value: string) {
+  const name = value.replace(/^ +| +$/g, '').replace(/ {2,}/g, ' ')
+  if (name.length < 3 || name.length > 100) {
+    return 'O nome deve ter de 3 a 100 caracteres.'
+  }
+  if (/[0-9]/.test(name)) {
+    return 'O nome não pode conter dígitos.'
+  }
+  const words = name
+    .split(' ')
+    .filter((word) => /\p{L}/u.test(word))
+  if (words.length < 2) {
+    return 'Informe ao menos duas palavras no nome.'
+  }
+  return ''
+}
+
 function receiptNumber(value: unknown) {
   return typeof value === 'number' ? value : 0
 }
@@ -119,8 +136,10 @@ export function PlayersPage({
   const [loadError, setLoadError] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [createForm, setCreateForm] = useState(createInitialForm)
+  const [createNameError, setCreateNameError] = useState('')
   const [createdPlayer, setCreatedPlayer] = useState<Player | null>(null)
   const [editing, setEditing] = useState<Player | null>(null)
+  const [editNameError, setEditNameError] = useState('')
   const [buying, setBuying] = useState<Player | null>(null)
   const [purchaseReceipt, setPurchaseReceipt] = useState<Record<string, unknown> | null>(null)
 
@@ -155,6 +174,9 @@ export function PlayersPage({
 
   const submitCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const nameError = playerNameValidationMessage(createForm.name)
+    setCreateNameError(nameError)
+    if (nameError) return
     const payload = {
       name: createForm.name,
       position: createForm.position,
@@ -173,6 +195,7 @@ export function PlayersPage({
     if (created) {
       setCreatedPlayer(created as Player)
       setCreateForm(createInitialForm())
+      setCreateNameError('')
       setShowCreate(false)
     }
   }
@@ -181,17 +204,24 @@ export function PlayersPage({
     event.preventDefault()
     if (!editing) return
     const form = new FormData(event.currentTarget)
+    const name = String(form.get('name'))
+    const nameError = playerNameValidationMessage(name)
+    setEditNameError(nameError)
+    if (nameError) return
     const updated = await run(
       () =>
         api.updatePlayer(editing.id, {
-          name: String(form.get('name')),
+          name,
           position: String(form.get('position')),
           agility: Number(form.get('agility')),
           age: Number(form.get('age')),
         }),
       'Dados do jogador atualizados.',
     )
-    if (updated) setEditing(null)
+    if (updated) {
+      setEditing(null)
+      setEditNameError('')
+    }
   }
 
   const submitBuy = async (event: FormEvent<HTMLFormElement>) => {
@@ -222,7 +252,13 @@ export function PlayersPage({
           <h1>Jogadores</h1>
           <p>Cadastre, acompanhe valores e gerencie transferências.</p>
         </div>
-        <button className="button button-primary" onClick={() => setShowCreate(true)}>
+        <button
+          className="button button-primary"
+          onClick={() => {
+            setCreateNameError('')
+            setShowCreate(true)
+          }}
+        >
           + Novo jogador
         </button>
       </header>
@@ -470,7 +506,10 @@ export function PlayersPage({
                           <button
                             className="button button-small"
                             disabled={busy}
-                            onClick={() => setEditing(player)}
+                            onClick={() => {
+                              setEditNameError('')
+                              setEditing(player)
+                            }}
                           >
                             Editar
                           </button>
@@ -536,7 +575,27 @@ export function PlayersPage({
           <form className="form-grid" onSubmit={submitCreate}>
             <label className="wide-field">
               Nome completo
-              <input name="name" minLength={3} maxLength={100} required value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} />
+              <input
+                name="name"
+                minLength={3}
+                maxLength={100}
+                required
+                value={createForm.name}
+                aria-invalid={Boolean(createNameError)}
+                aria-describedby={createNameError ? 'create-player-name-error' : undefined}
+                onChange={(event) => {
+                  const name = event.target.value
+                  setCreateForm({ ...createForm, name })
+                  if (createNameError) {
+                    setCreateNameError(playerNameValidationMessage(name))
+                  }
+                }}
+              />
+              {createNameError && (
+                <small className="field-error" id="create-player-name-error" role="alert">
+                  {createNameError}
+                </small>
+              )}
             </label>
             <label>
               Posição
@@ -562,7 +621,25 @@ export function PlayersPage({
           <form className="form-grid" onSubmit={submitEdit}>
             <label className="wide-field">
               Nome completo
-              <input name="name" defaultValue={editing.name} minLength={3} maxLength={100} required />
+              <input
+                name="name"
+                defaultValue={editing.name}
+                minLength={3}
+                maxLength={100}
+                required
+                aria-invalid={Boolean(editNameError)}
+                aria-describedby={editNameError ? 'edit-player-name-error' : undefined}
+                onChange={(event) => {
+                  if (editNameError) {
+                    setEditNameError(playerNameValidationMessage(event.target.value))
+                  }
+                }}
+              />
+              {editNameError && (
+                <small className="field-error" id="edit-player-name-error" role="alert">
+                  {editNameError}
+                </small>
+              )}
             </label>
             <label>
               Posição

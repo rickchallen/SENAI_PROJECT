@@ -35,6 +35,7 @@ def test_market_value_uses_condition_agility_age_and_rounding(
 
 def test_overall_and_base_value_round_half_up():
     assert calculate_overall("ZAG", (50, 90, 60, 40, 80, 75)) == 73
+    assert calculate_overall("LAT", (1, 1, 99, 1, 1, 1)) == 21
     assert calculate_base_value(70, 84, 21) == Decimal("34.20")
 
 

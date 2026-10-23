@@ -127,18 +127,29 @@ def test_invalid_values_are_400_and_business_conflicts_are_409(client):
     assert "message" in response.json()
 
 
-def test_player_name_may_be_single_word_and_homonyms_are_allowed(client):
-    first = client.post(
+def test_player_name_requires_two_words_without_digits_and_allows_homonyms(client):
+    one_word = client.post(
         "/api/v1/players",
         json=_player("Ronaldo", "ATA"),
     )
+    with_digit = client.post(
+        "/api/v1/players",
+        json=_player("Ronaldo 10", "ATA"),
+    )
+    assert one_word.status_code == 400
+    assert with_digit.status_code == 400
+
+    first = client.post(
+        "/api/v1/players",
+        json=_player("Ronaldo Fenômeno", "ATA"),
+    )
     second = client.post(
         "/api/v1/players",
-        json=_player("Ronaldo", "ATA"),
+        json=_player("Ronaldo Fenômeno", "ATA"),
     )
 
     assert first.status_code == 201, first.text
     assert second.status_code == 201, second.text
-    assert first.json()["name"] == "Ronaldo"
-    assert second.json()["name"] == "Ronaldo"
+    assert first.json()["name"] == "Ronaldo Fenômeno"
+    assert second.json()["name"] == "Ronaldo Fenômeno"
     assert first.json()["id"] != second.json()["id"]

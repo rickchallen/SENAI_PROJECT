@@ -120,7 +120,9 @@ export function ClubsPage({
                 <span className="club-mark">{club.acronym}</span>
                 <span className="club-card-copy">
                   <strong>{club.name}</strong>
-                  <small>Caixa {money(club.cash)}</small>
+                  <small>
+                    Caixa {money(club.cash)} · Elenco {money(club.squad_value)}
+                  </small>
                 </span>
                 <span className="club-worth">
                   <small>Patrimônio</small>

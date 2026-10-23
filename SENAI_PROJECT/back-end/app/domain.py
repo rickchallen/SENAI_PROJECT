@@ -17,7 +17,7 @@ POSITION_ORDER = {position: index for index, position in enumerate(POSITIONS)}
 WEIGHTS = {
     "GOL": (10, 0, 20, 0, 40, 30),
     "ZAG": (10, 0, 15, 0, 45, 30),
-    "LAT": (25, 0, 15, 25, 15, 20),
+    "LAT": (25, 0, 20, 15, 25, 15),
     "MEI": (10, 15, 35, 25, 5, 10),
     "ATA": (20, 40, 10, 20, 0, 10),
 }
@@ -143,7 +143,7 @@ def normalize_search(value: str) -> str:
 
 
 def fold_accents(value: str) -> str:
-    decomposed = unicodedata.normalize("NFD", value.casefold())
+    decomposed = unicodedata.normalize("NFD", value.lower())
     return "".join(
         character for character in decomposed if unicodedata.category(character) != "Mn"
     )
@@ -178,12 +178,23 @@ def parse_enum(value: object, field: str, accepted: tuple[str, ...]) -> str:
 
 
 def validate_player_name(value: object) -> str:
-    return normalize_text(value, "name", 3, 100)
+    name = normalize_text(value, "name", 3, 100)
+    words = name.split(" ")
+    if sum(
+        any(unicodedata.category(char).startswith("L") for char in word)
+        for word in words
+    ) < 2 or any(char in "0123456789" for char in name):
+        bad_request("name deve conter ao menos duas palavras e nenhum dígito.")
+    return name
 
 
 def validate_club_name(value: object) -> str:
     name = normalize_text(value, "name", 3, 60)
-    words = name.split(" ")
+    words = [
+        word
+        for word in name.split(" ")
+        if any(unicodedata.category(char).startswith("L") for char in word)
+    ]
     if not 2 <= len(words) <= 5:
         bad_request("name deve conter de duas a cinco palavras.")
     for character in name:
