@@ -144,9 +144,10 @@ cd frontend1
 npm run dev
 ```
 
-O backend pode ser iniciado localmente com `uvicorn main:app --reload` a partir
-de `back-end`, desde que `DATABASE_URL` aponte para um PostgreSQL inicializado
-com a migração versionada.
+O backend carrega as variáveis do `.env` na raiz do projeto e pode ser iniciado
+localmente com `uvicorn main:app --reload` a partir de `back-end`. Para esse
+modo, configure `DATABASE_URL` para o PostgreSQL local e aplique a migração
+versionada antes de iniciar a API.
 
 ## Regras e segurança
 
