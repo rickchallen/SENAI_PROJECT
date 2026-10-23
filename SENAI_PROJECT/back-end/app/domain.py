@@ -178,14 +178,7 @@ def parse_enum(value: object, field: str, accepted: tuple[str, ...]) -> str:
 
 
 def validate_player_name(value: object) -> str:
-    name = normalize_text(value, "name", 3, 100)
-    words = name.split(" ")
-    if sum(
-        any(unicodedata.category(char).startswith("L") for char in word)
-        for word in words
-    ) < 2 or any(char.isdigit() for char in name):
-        bad_request("name deve conter ao menos duas palavras e nenhum dígito.")
-    return name
+    return normalize_text(value, "name", 3, 100)
 
 
 def validate_club_name(value: object) -> str:

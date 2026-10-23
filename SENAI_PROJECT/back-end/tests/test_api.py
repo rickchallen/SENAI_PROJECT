@@ -125,3 +125,20 @@ def test_invalid_values_are_400_and_business_conflicts_are_409(client):
     )
     assert response.status_code == 409
     assert "message" in response.json()
+
+
+def test_player_name_may_be_single_word_and_homonyms_are_allowed(client):
+    first = client.post(
+        "/api/v1/players",
+        json=_player("Ronaldo", "ATA"),
+    )
+    second = client.post(
+        "/api/v1/players",
+        json=_player("Ronaldo", "ATA"),
+    )
+
+    assert first.status_code == 201, first.text
+    assert second.status_code == 201, second.text
+    assert first.json()["name"] == "Ronaldo"
+    assert second.json()["name"] == "Ronaldo"
+    assert first.json()["id"] != second.json()["id"]
